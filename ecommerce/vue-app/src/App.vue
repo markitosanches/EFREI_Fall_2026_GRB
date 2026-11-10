@@ -4,6 +4,7 @@
       <div class="flex flex-wrap items-center justify-between mx-auto p-4">
       <div class="flex items-center space-x-3 rtl:space-x-reverse">
           <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Vue Store</span>
+          <span class="self-center" v-if="authStore.isAuthenticated"> Hello {{ authStore.user.fullname }}!</span>
       </div>
       <div class="flex items-center md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
           <button type="button" class="mr-2 cursor-pointer" @click="toggleSideBar">
@@ -12,6 +13,7 @@
               <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm0 0h8m-8 0-1-4m9 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm-9-4h10l2-7H3m2 7L3 4m0 0-.792-3H1"/>
             </svg>
           </button>
+          
           <span class="bg-gray-800 rounded-full text-white h-7 w-7 text-center"><span class="">{{ totalQuantity }}</span></span>
       </div>
       <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-user">
@@ -19,14 +21,17 @@
           <li>
             <router-link :to="{name: 'home'}" class="block py-2 px-3 text-white bg-blue-700 rounded md:bg-transparent md:text-blue-700 md:p-0 md:dark:text-blue-500" aria-current="page">Home</router-link>
           </li>
-          <li>
+          <li  v-if="authStore.isAuthenticated">
             <router-link :to="{name: 'add-product'}" class="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700">Add Product</router-link>
           </li>
-          <li>
+          <li  v-if="authStore.isAuthenticated">
             <router-link :to="{name: 'user'}" class="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700">Register</router-link>
           </li>
-          <li>
+          <li v-if="!authStore.isAuthenticated">
             <router-link :to="{name: 'login'}" class="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700">Login</router-link>
+          </li>
+          <li v-if="authStore.isAuthenticated">
+            <span @click="logout" class="cursor-pointer block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:text-white md:dark:hover:text-blue-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent dark:border-gray-700"> Logout </span>
           </li>
         </ul>
       </div>
@@ -56,8 +61,16 @@ import MainFooter from './components/MainFooter.vue';
 import SideBar from './components/SideBar.vue';
 // import product from './products.json';
 import ProductDataService from './services/ProductDataService.js';
+import UserDataService from './services/UserDataService.js';
+import { useAuthStore } from './store/auth.js';
 
 export default{
+  setup(){
+    const authStore = useAuthStore()
+    return{
+      authStore
+    }
+  },
   mounted () {
     ProductDataService.getAll()
     .then(response => {
@@ -95,6 +108,15 @@ export default{
     },
     removeInventory(index){
       this.inventory.splice(index, 1)
+    },
+    logout(){
+      const authStore = useAuthStore()
+
+      UserDataService.getLogout()
+      .then(response => {
+        authStore.logout()
+        this.$router.push('login')
+      })
     }
   },
   computed: {
